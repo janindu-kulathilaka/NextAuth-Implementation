@@ -11,9 +11,8 @@ const SettingsPage = () => {
   };
   return (
     <div className="">
-      {JSON.stringify(user)}
       <button
-        className="px-4 py-2 bg-blue-400 text-white rounded-lg ml-5"
+        className="px-4 py-2 bg-white text-black font-md rounded-lg ml-5 mt-5"
         onClick={onClick}
       >
         Sign Out
