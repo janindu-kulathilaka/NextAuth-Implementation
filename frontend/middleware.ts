@@ -1,13 +1,12 @@
 import NextAuth from 'next-auth';
 import authConfig from './auth.config';
-
+import { NextResponse } from 'next/server';
 import {
   DEFAULT_LOGIN_REDIRECT,
   apiAuthPrefix,
   authRoutes,
   publicRoutes,
 } from '@/routes';
-import next from 'next';
 
 const { auth } = NextAuth(authConfig);
 
@@ -20,14 +19,14 @@ export default auth((req) => {
   const isAuthRoute = authRoutes.includes(nextUrl.pathname);
 
   if (isApiAuthRoute) {
-    return null;
+    return NextResponse.next();
   }
 
   if (isAuthRoute) {
     if (isLoggingIn) {
-      return Response.redirect(new URL(DEFAULT_LOGIN_REDIRECT, nextUrl));
+      return NextResponse.redirect(new URL(DEFAULT_LOGIN_REDIRECT, nextUrl));
     }
-    return null;
+    return NextResponse.next();
   }
 
   if (!isLoggingIn && !isPublicRoute) {
@@ -38,12 +37,12 @@ export default auth((req) => {
 
     const encodedCallbackUrl = encodeURIComponent(callBackUrl);
 
-    return Response.redirect(
+    return NextResponse.redirect(
       new URL(`/login?callbackUrl=${encodedCallbackUrl}`, nextUrl),
     );
   }
 
-  return null;
+  return NextResponse.next();
 });
 
 export const config = {
