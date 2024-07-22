@@ -2,6 +2,7 @@
 
 import * as z from 'zod';
 import { AuthError } from 'next-auth';
+import bcrypt from 'bcryptjs';
 
 import { db } from '@/lib/db';
 import { signIn } from '@/auth';
@@ -16,10 +17,11 @@ import { sendVerificationEmail, sendTwoFactorTokenEmail } from '@/lib/mail';
 import { getTwoFactorTokenByEmail } from '@/data/two-factor-token';
 import { getTwoFactorConfirmationByUserId } from '@/data/two-factor-confirmation';
 
-export const login = async (values: z.infer<typeof LoginSchema>) => {
+export const login = async (
+  values: z.infer<typeof LoginSchema>,
+  callbackUrl?: string | null,
+) => {
   const validateFeilds = LoginSchema.safeParse(values);
-  let error = '';
-  let success = '';
 
   if (!validateFeilds.success) {
     return { error: 'Invalid fields!' };
@@ -31,6 +33,12 @@ export const login = async (values: z.infer<typeof LoginSchema>) => {
 
   if (!existingUser || !existingUser.email || !existingUser.password) {
     return { error: 'Email does not exists.' };
+  }
+
+  const passwordMatch = await bcrypt.compare(password, existingUser.password);
+
+  if (!passwordMatch) {
+    return { error: 'Invalid password!' };
   }
   if (!existingUser.emailVerified) {
     const verificationToken = await generateVerificationToken(
@@ -93,7 +101,7 @@ export const login = async (values: z.infer<typeof LoginSchema>) => {
     await signIn('credentials', {
       email,
       password,
-      redirectTo: DEFAULT_LOGIN_REDIRECT,
+      redirectTo: callbackUrl || DEFAULT_LOGIN_REDIRECT,
     });
   } catch (error) {
     if (error instanceof AuthError) {
